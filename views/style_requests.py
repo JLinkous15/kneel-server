@@ -1,3 +1,7 @@
+import json
+import sqlite3
+from models import Style
+
 STYLES=[
     {
         "id":1,
@@ -28,12 +32,30 @@ STYLES=[
 
 def get_all_styles():
     """returns the STYLES list of dictionaries"""
-    return STYLES
+    with sqlite3.connect("./kneeldiamonds.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        SELECT *
+        FROM styles
+        """)
+        styles = []
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            style = Style(row["id"], row["name"], row["price"])
+            styles.append(style.__dict__)
+        return styles
 
 def get_single_style(id):
     """returns a single style dictionary by comparing the id argument to the primary key"""
-    requested_style=None
-    for style in STYLES:
-        if style["id"]==id:
-            requested_style=style
-    return requested_style
+    with sqlite3.connect("./kneeldiamonds.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        SELECT *
+        FROM styles s
+        WHERE s.id = ?
+        """,(id,))
+        data = db_cursor.fetchone()
+        style = Style(data["id"], data["name"], data["price"])
+        return style.__dict__
